@@ -1,7 +1,9 @@
 const express = require('express');
 const app = express();
 const port = 3001;
-const cors = require('cors')
+// const cors = require('cors')
+// app.use(cors());
+
 
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "https://hr-management-4a24c.web.app");
@@ -18,9 +20,6 @@ app.use(function (req, res, next) {
 //     }
 //   }
 // }
-
-// Then pass them to cors:
-// app.use(cors(corsOptions));
 
 app.get('/', (req, res) => {
     res.send({test:123})
