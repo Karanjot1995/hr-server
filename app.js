@@ -5,11 +5,13 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const cors = require("cors")
 const User = require("./model/user");
+const Hours = require("./model/hours")
 const auth = require("./middleware/auth");
+const Timesheet = require("./model/timesheet");
 const app = express();
 const TOKEN_KEY = '4556hghgjjjfftdfgcjvjkhfgchgfvjh'
 app.use(express.json({ limit: "50mb" }));
-app.use(cors())
+// app.use(cors())
 
 app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "https://hr-management-4a24c.web.app");
@@ -41,6 +43,7 @@ app.post("/api/sign-up", async (req, res) => {
       first_name,
       last_name,
       password: encryptedPassword,
+      hours:[]
     });
 
     // Create token
@@ -100,6 +103,107 @@ app.get('/api/logout', async (req,res)=>{
   res.send(user)
 })
 
+
+app.post('/api/hours',auth, async(req, res) => {
+  let curr_user = req.user
+  let data = req.body
+  let dt = new Date(data.date)
+  let newdate = dt.getFullYear() + "/" + (dt.getMonth() + 1) + "/" + dt.getDate();
+
+  if(curr_user){
+    let user = await User.findOne({'email' : curr_user.email})
+    let existing = await Hours.findOne({date: newdate});
+
+    if(existing){
+      if(data.mark_in){
+        await Hours.findOneAndUpdate({date: newdate}, {mark_in:data.mark_in});
+      }else if(data.mark_out){
+        await Hours.findOneAndUpdate({date: newdate}, {mark_out:data.mark_out});
+      }
+    }else{
+      if(data.mark_in){
+        await Hours.create({u_id:user._id, date: newdate, mark_in: data.mark_in})
+      }else{
+        await Hours.create({u_id:user._id, date: newdate, mark_out: data.mark_out})
+      }
+    }
+
+    let hrs = await Hours.findOne({date: newdate});
+    console.log(hrs)
+    res.send({user:curr_user})
+  }
+  // let genre_books = 
+})
+
+app.get('/api/hours',auth, async(req, res) => {
+  let curr_user = req.user
+
+
+  if(curr_user){
+    let user = await User.findOne({'email' : curr_user.email})
+    let hours = await Hours.find({u_id: user._id})
+    console.log(hours)
+
+    res.send({hours:hours})
+  }
+  // let genre_books = 
+})
+
+
+app.get('/api/timesheet',auth, async(req, res) => {
+  let curr_user = req.user
+
+
+  if(curr_user){
+    let user = await User.findOne({'email' : curr_user.email})
+    let timesheet = await Timesheet.find({u_id: user._id})
+    console.log(timesheet)
+    res.send({timesheet:timesheet})
+  }
+  // let genre_books = 
+})
+
+app.post('/api/timesheet',auth, async(req, res) => {
+  let curr_user = req.user
+  let data = req.body
+  
+  let dt = new Date(data.date)
+  let newdate = dt.getFullYear() + "/" + (dt.getMonth() + 1) + "/" + dt.getDate();
+  delete data.date
+
+  let row = {
+    date: newdate,
+    type_work: data.typeWork,
+    project: data.project,
+    department: data.department,
+    description: data.description,
+    duration: data.duration
+  }
+
+  if(curr_user){
+    let user = await User.findOne({'email' : curr_user.email})
+    // let existing = await Hours.findOne({date: newdate});
+
+    let ts = await Timesheet.create({u_id:user._id, ...row})
+
+    // if(existing){
+    //   if(data.mark_in){
+    //     await Hours.findOneAndUpdate({date: newdate}, {mark_in:data.mark_in});
+    //   }else if(data.mark_out){
+    //     await Hours.findOneAndUpdate({date: newdate}, {mark_out:data.mark_out});
+    //   }
+    // }else{
+    //   if(data.mark_in){
+    //     await Hours.create({u_id:user._id, date: newdate, mark_in: data.mark_in})
+    //   }else{
+    //     await Hours.create({u_id:user._id, date: newdate, mark_out: data.mark_out})
+    //   }
+    // }
+
+    res.send({timesheet:ts})
+  }
+  // let genre_books = 
+})
 
 app.get("/", (req, res) => {
   res.send("Hello 🙌 ");
