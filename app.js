@@ -305,7 +305,6 @@ function sendEmail(data){
     <ul>  
       <li>Name: ${data.first_name + ' ' + data.last_name}</li>
       <li>Email: ${data.email}</li>
-      <li>Email: ${data.email}</li>
     </ul>
     <p>${data.message}</p>
   `;
