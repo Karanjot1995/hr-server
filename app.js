@@ -14,8 +14,8 @@ app.use(express.json({ limit: "50mb" }));
 app.use(cors())
 
 app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "https://hr-management-4a24c.web.app");
-  // res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+  // res.header("Access-Control-Allow-Origin", "https://hr-management-4a24c.web.app");
+  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
@@ -179,13 +179,12 @@ app.post('/api/hours',auth, async(req, res) => {
   if(curr_user){
     let user = await User.findOne({'email' : curr_user.email})
     let existing = await Hours.findOne({date: newdate, u_id: user._id});
-
+    
     if(existing){
-      console.log(existing)
       if(data.mark_in){
-        await Hours.findOneAndUpdate({date: newdate}, {mark_in:data.mark_in});
+        await Hours.findOneAndUpdate({date: newdate,u_id: user._id}, {mark_in:data.mark_in});
       }else if(data.mark_out){
-        await Hours.findOneAndUpdate({date: newdate}, {mark_out:data.mark_out});
+        await Hours.findOneAndUpdate({date: newdate,u_id: user._id}, {mark_out:data.mark_out});
       }
     }else{
       if(data.mark_in){
