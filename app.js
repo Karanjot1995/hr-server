@@ -178,9 +178,10 @@ app.post('/api/hours',auth, async(req, res) => {
 
   if(curr_user){
     let user = await User.findOne({'email' : curr_user.email})
-    let existing = await Hours.findOne({date: newdate});
+    let existing = await Hours.findOne({date: newdate, u_id: user._id});
 
     if(existing){
+      console.log(existing)
       if(data.mark_in){
         await Hours.findOneAndUpdate({date: newdate}, {mark_in:data.mark_in});
       }else if(data.mark_out){
@@ -195,7 +196,6 @@ app.post('/api/hours',auth, async(req, res) => {
     }
 
     let hrs = await Hours.findOne({date: newdate});
-    console.log(hrs)
     res.send({user:curr_user})
   }
   // let genre_books = 
@@ -203,8 +203,6 @@ app.post('/api/hours',auth, async(req, res) => {
 
 app.get('/api/hours',auth, async(req, res) => {
   let curr_user = req.user
-
-
   if(curr_user){
     let user = await User.findOne({'email' : curr_user.email})
     let hours = await Hours.find({u_id: user._id})
