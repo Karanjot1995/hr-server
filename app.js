@@ -8,14 +8,29 @@ const User = require("./model/user");
 const Hours = require("./model/hours")
 const auth = require("./middleware/auth");
 const Timesheet = require("./model/timesheet");
+const bodyParser = require('body-parser');
+const exphbs = require('express-handlebars');
+const path = require('path');
+const nodemailer = require('nodemailer');
 const app = express();
+
+// View engine setup
+app.engine('handlebars', exphbs.engine());
+app.set('view engine', 'handlebars');
+// Static folder
+app.use('/public', express.static(path.join(__dirname, 'public')));
+// Body Parser Middleware
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
+
 const TOKEN_KEY = '4556hghgjjjfftdfgcjvjkhfgchgfvjh'
 app.use(express.json({ limit: "50mb" }));
 app.use(cors())
 
 app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "https://hr-management-4a24c.web.app");
-  // res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+  // res.header("Access-Control-Allow-Origin", "https://hr-management-4a24c.web.app");
+  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
@@ -61,6 +76,10 @@ app.post("/api/sign-up", async (req, res) => {
         expiresIn: "2h",
       }
     );
+
+    let data = user._doc
+    data.message = "You have signed up successfully. Login to continue."
+    sendEmail(data)
     // save user token
     user.token = token;
     // return new user
@@ -179,7 +198,7 @@ app.post('/api/hours',auth, async(req, res) => {
   if(curr_user){
     let user = await User.findOne({'email' : curr_user.email})
     let existing = await Hours.findOne({date: newdate, u_id: user._id});
-
+    
     if(existing){
       if(data.mark_in){
         await Hours.findOneAndUpdate({date: newdate,u_id: user._id}, {mark_in:data.mark_in});
@@ -278,6 +297,52 @@ app.post('/api/timesheet',auth, async(req, res) => {
   }
   // let genre_books = 
 })
+
+
+function sendEmail(data){
+  const output = `
+    <h3>Welcome!</h3>
+    <ul>  
+      <li>Name: ${data.first_name + ' ' + data.last_name}</li>
+      <li>Email: ${data.email}</li>
+      <li>Email: ${data.email}</li>
+    </ul>
+    <p>${data.message}</p>
+  `;
+  // create reusable transporter object using the default SMTP transport
+  let transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // true for 465, false for other ports
+    auth: {
+        user: 'kartik.kataria1997@gmail.com', // generated ethereal user
+        pass: 'woxcdavspompwvtv'
+    },
+    tls:{
+      rejectUnauthorized:false
+    }
+  });
+
+  // setup email data with unicode symbols
+  let mailOptions = {
+      from: 'kartik.kataria1997@gmail.com', // sender address
+      to: data.email, // list of receivers
+      subject: 'Sign up successful!', // Subject line
+      text: 'Hello world?', // plain text body
+      html: output // html body
+  };
+
+  // send mail with defined transport object
+  transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+          return console.log(error);
+      }
+      console.log('Message sent: %s', info.messageId);   
+      console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+
+      res.render('main', {msg:'Email has been sent'});
+  });
+}
 
 app.get("/", (req, res) => {
   res.send("Hello 🙌 ");
